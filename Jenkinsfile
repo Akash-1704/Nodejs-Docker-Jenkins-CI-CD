@@ -7,6 +7,11 @@ pipeline {
         IMAGE_TAG = "${env.BUILD_NUMBER}"
     }
     stages {
+        stage('clean workspace'){
+            steps{
+                cleanWs()
+            }
+        }
         stage('Checkout') {
             steps {
                 git(
@@ -15,18 +20,12 @@ pipeline {
                 )
             }
         }
-        stage('Build Docker Image') {
-            steps {
-                script {
-                    docker.build("${DOCKER_HUB_REPO}:${IMAGE_TAG}")
-                }
-            }
-        }
-        stage('Push Docker Image') {
-            steps {
-                script {
-                    docker.withRegistry("https://${DOCKER_HUB_REGISTRY}/v1/", 'docker') {
-                        docker.image("${DOCKER_HUB_REPO}:${IMAGE_TAG}").push()
+        stage("Docker Build & Push"){
+            steps{
+                script{
+                   withDockerRegistry(credentialsId: 'docker', toolName: 'docker'){   
+                       sh "docker build -t sky170496/my-node-app ."
+                       sh "docker push sky170496/my-node-app:${IMAGE_TAG}"
                     }
                 }
             }
@@ -48,7 +47,7 @@ pipeline {
         stage('Deploy to container') {
             steps {
                 script {
-                    withDockerServer(url: "${DOCKER_HOST}", credentialsId: 'docker-remote') {
+                    withDockerServer(url: "${DOCKER_HOST}", credentialsId: 'docker') {
                         sh "docker pull ${DOCKER_HUB_REPO}:${IMAGE_TAG}"
                         sh "docker run -d --name my-node-app --restart always -p 80:3000 ${DOCKER_HUB_REPO}:${IMAGE_TAG}"
                     }
