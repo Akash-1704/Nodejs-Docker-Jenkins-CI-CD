@@ -9,7 +9,10 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/Akash-1704/Nodejs-Docker-Jenkins-CI-CD.git', branch: 'main'
+                git(
+                    url: 'https://github.com/Akash-1704/Nodejs-Docker-Jenkins-CI-CD.git',
+                    branch: 'main'
+                )
             }
         }
         stage('Build Docker Image') {
