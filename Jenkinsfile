@@ -55,5 +55,13 @@ pipeline {
                 }
             }
         }
+        stage('Remove unused images') {
+            steps {
+                script {
+                    withDockerServer(url: "${DOCKER_HOST}", credentialsId: 'docker') {
+                        sh "docker image prune -f"
+                    }
+                }
+            }
     }
 }
