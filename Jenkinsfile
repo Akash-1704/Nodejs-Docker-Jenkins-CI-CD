@@ -5,10 +5,11 @@ pipeline {
         DOCKER_HUB_REGISTRY = 'docker.io'
         DOCKER_HUB_REPO = 'sky170496/my-node-app'
         IMAGE_TAG = "${env.BUILD_NUMBER}"
+        IMAGE_NAME = "${DOCKER_HUB_REPO}:${IMAGE_TAG}"
     }
     stages {
-        stage('clean workspace'){
-            steps{
+        stage('Clean Workspace') {
+            steps {
                 cleanWs()
             }
         }
@@ -20,13 +21,12 @@ pipeline {
                 )
             }
         }
-        stage("Docker Build & Push"){
-            steps{
-                script{
-                   withDockerRegistry(credentialsId: 'docker', toolName: 'docker'){   
-                       sh "docker build -t sky170496/my-node-app ."
-                       sh "docker tag sky170496/my-node-app:latest docker.io/sky170496/my-node-app:${IMAGE_TAG}"
-                       sh "docker push sky170496/my-node-app:${IMAGE_TAG}"
+        stage('Docker Build & Push') {
+            steps {
+                script {
+                    withDockerRegistry(credentialsId: 'docker', toolName: 'docker') {   
+                        sh "docker build -t ${IMAGE_NAME} ."
+                        sh "docker push ${IMAGE_NAME}"
                     }
                 }
             }
@@ -36,32 +36,35 @@ pipeline {
                 script {
                     withDockerServer(url: "${DOCKER_HOST}", credentialsId: 'docker-remote') {
                         try {
-                            sh 'docker stop my-node-app'
-                            sh 'docker rm my-node-app'
+                            sh 'docker stop my-node-app || true'
+                            sh 'docker rm my-node-app || true'
                         } catch (Exception e) {
-                            echo "Container my-node-app not found, moving to next stage"
+                            echo "Container my-node-app not found, moving to the next stage"
                         }
                     }
                 }
             }
         }
-        stage('Deploy to container') {
+        stage('Deploy to Container') {
             steps {
                 script {
                     withDockerServer(url: "${DOCKER_HOST}", credentialsId: 'docker') {
-                        sh "docker pull ${DOCKER_HUB_REPO}:${IMAGE_TAG}"
-                        sh "docker run -d --name my-node-app --restart always -p 80:3000 ${DOCKER_HUB_REPO}:${IMAGE_TAG}"
+                        sh "docker pull ${IMAGE_NAME}"
+                        sh "docker run -d --name my-node-app --restart always -p 80:3000 ${IMAGE_NAME}"
                     }
                 }
             }
         }
-        stage('Remove unused images') {
+        stage('Remove Old Images') {
             steps {
                 script {
                     withDockerServer(url: "${DOCKER_HOST}", credentialsId: 'docker') {
-                        sh "docker image prune -f"
+                        sh """
+                        docker images ${DOCKER_HUB_REPO} --format '{{.Tag}}' | sort -n | head -n -3 | xargs -I {} docker rmi ${DOCKER_HUB_REPO}:{}
+                        """
                     }
                 }
             }
+        }
     }
 }
