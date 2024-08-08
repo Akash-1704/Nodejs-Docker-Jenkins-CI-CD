@@ -25,6 +25,7 @@ pipeline {
                 script{
                    withDockerRegistry(credentialsId: 'docker', toolName: 'docker'){   
                        sh "docker build -t sky170496/my-node-app ."
+                       sh "docker tag sky170496/my-node-app:latest docker.io/sky170496/my-node-app:${IMAGE_TAG}"
                        sh "docker push sky170496/my-node-app:${IMAGE_TAG}"
                     }
                 }
