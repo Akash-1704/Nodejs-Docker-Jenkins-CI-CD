@@ -25,38 +25,35 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 script {
-                    docker.withRegistry("https://${DOCKER_HUB_REGISTRY}/v1/", toolName: 'docker', 'docker') {
+                    docker.withRegistry("https://${DOCKER_HUB_REGISTRY}/v1/", 'docker') {
                         docker.image("${DOCKER_HUB_REPO}:${IMAGE_TAG}").push()
                     }
                 }
             }
         }
-        stage('Clean up containers') {   //if container runs it will stop and remove this block
-          steps {
-           script {
-               withDockerServer(url: "${DOCKER_HOST}", credentialsId: 'docker-remote') {
-                   try {
-                       sh 'docker stop nodejs-app'
-                       sh 'docker rm nodejs-app'
-                   } catch (Exception e) {
-                       echo "Container pet1 not found, moving to next stage"  
+        stage('Clean up containers') {
+            steps {
+                script {
+                    withDockerServer(url: "${DOCKER_HOST}", credentialsId: 'docker-remote') {
+                        try {
+                            sh 'docker stop my-node-app'
+                            sh 'docker rm my-node-app'
+                        } catch (Exception e) {
+                            echo "Container my-node-app not found, moving to next stage"
+                        }
+                    }
                 }
             }
-          }
         }
-    }
-        stage('Deploy to conatiner'){
-            steps{
-               script {
-                   withDockerServer(url: "${DOCKER_HOST}", credentialsId: 'docker-remote') {
-                       sh "docker pull ${DOCKER_HUB_REPO}:${IMAGE_TAG}"
-                       sh "docker run -d --name my-node-app --restart always -p 80:3000 ${DOCKER_HUB_REPO}:${IMAGE_TAG}"
-                     
+        stage('Deploy to container') {
+            steps {
+                script {
+                    withDockerServer(url: "${DOCKER_HOST}", credentialsId: 'docker-remote') {
+                        sh "docker pull ${DOCKER_HUB_REPO}:${IMAGE_TAG}"
+                        sh "docker run -d --name my-node-app --restart always -p 80:3000 ${DOCKER_HUB_REPO}:${IMAGE_TAG}"
+                    }
+                }
             }
         }
-      }
-    }
-
     }
 }
-
