@@ -1,15 +1,31 @@
 const express = require('express');
 const app = express();
+const port = 3000;
 
-app.set('view engine', 'ejs');
 app.use(express.static('public'));
 
 app.get('/', (req, res) => {
-    res.render('index', { title: 'Welcome to My Node App' });
+    res.render('index');
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
+app.get('/greet', (req, res) => {
+    const hours = new Date().getHours();
+    let greeting;
+
+    if (hours < 12) {
+        greeting = 'Good Morning!';
+    } else if (hours < 18) {
+        greeting = 'Good Afternoon!';
+    } else {
+        greeting = 'Good Evening!';
+    }
+
+    res.json({ message: greeting });
+});
+
+app.set('view engine', 'ejs');
+
+app.listen(port, () => {
+    console.log(`App running at http://localhost:${port}`);
 });
 
