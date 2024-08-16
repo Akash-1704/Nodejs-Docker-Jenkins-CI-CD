@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        DOCKER_HOST = 'tcp://172.31.33.201:2376'
+        DOCKER_HOST = 'tcp://172.31.47.81:2376'
         DOCKER_HUB_REGISTRY = 'docker.io'
         DOCKER_HUB_REPO = 'sky170496/my-node-app'
         IMAGE_TAG = "${env.BUILD_NUMBER}"
